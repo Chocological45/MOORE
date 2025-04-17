@@ -14,7 +14,7 @@ except ImportError:
 from mushroom_rl.core import Environment, MDPInfo
 from mushroom_rl.utils.spaces import *
 
-from minigrid.wrappers import ImgObsWrapper
+from minigrid.wrappers import ImgObsWrapper, ReseedWrapper
 
 
 gym.logger.set_level(40)
@@ -27,8 +27,7 @@ class MiniGrid(Environment):
     are managed in a separate class.
 
     """
-    def __init__(self, name, horizon=None, gamma=0.99, render_mode = "rgb_array", wrappers=[ImgObsWrapper], wrappers_args=None,
-                 **env_args):
+    def __init__(self, name, horizon=None, gamma=0.99, render_mode = "rgb_array", wrappers=[ImgObsWrapper], wrappers_args=None, seed=None, changing=False, **env_args):
         """
         Constructor.
 
@@ -54,7 +53,16 @@ class MiniGrid(Environment):
             pybullet.connect(pybullet.DIRECT)
             self._not_pybullet = False
 
-        self.env = gym.make(name, render_mode=render_mode, **env_args)
+        if changing and seed is not None:
+            seeds = np.random.RandomState(seed).randint(0, 2**32 - 1, size=1000000).tolist()
+            self.env = ReseedWrapper(gym.make(name, render_mode=render_mode, **env_args), seeds=seeds)
+        elif not changing and seed is not None:
+            print(f'ENV SEED: {seed}')
+            self.env = ReseedWrapper(gym.make(name, render_mode=render_mode, **env_args), seeds=[seed,])
+        else:
+            self.env = gym.make(name, render_mode=render_mode, **env_args)
+
+
         self.env_name = name
 
         self._render_dt = self.env.unwrapped.dt if hasattr(self.env.unwrapped, "dt") else 0.0

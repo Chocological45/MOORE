@@ -25,14 +25,62 @@ MT_EXP = {"MT7": ["MiniGrid-DoorKey-6x6-v0", "MiniGrid-DistShift1-v0",
                            "MiniGrid-RedBlueDoors-6x6-v0", "MiniGrid-LavaGapS7-v0",
                            "MiniGrid-MemoryS11-v0", "MiniGrid-SimpleCrossingS9N2-v0", "MiniGrid-MultiRoom-N2-S4-v0"],
           "MT3": ["MiniGrid-LavaGapS7-v0", "MiniGrid-RedBlueDoors-6x6-v0", "MiniGrid-MemoryS11-v0"],
-          "MT5": ["MiniGrid-DoorKey-6x6-v0", "MiniGrid-LavaGapS7-v0", "MiniGrid-RedBlueDoors-6x6-v0", "MiniGrid-DistShift1-v0", "MiniGrid-MemoryS11-v0"]
+          "MT5": ["MiniGrid-DoorKey-6x6-v0", "MiniGrid-LavaGapS7-v0", "MiniGrid-RedBlueDoors-6x6-v0", "MiniGrid-DistShift1-v0", "MiniGrid-MemoryS11-v0"],
+          "MOSAIC-horizontal": [
+            "MiniGrid-SimpleCrossingS9N1-v0",
+            "MiniGrid-LavaCrossingS9N1-v0",
+            "MiniGrid-SimpleCrossingS9N2-v0",
+            "MiniGrid-LavaCrossingS9N2-v0",
+            "MiniGrid-SimpleCrossingS9N3-v0",
+            "MiniGrid-LavaCrossingS9N3-v0",
+
+            "MiniGrid-SimpleCrossingS9N1-v0",
+            "MiniGrid-LavaCrossingS9N1-v0",
+            "MiniGrid-SimpleCrossingS9N2-v0",
+            "MiniGrid-LavaCrossingS9N2-v0",
+            "MiniGrid-SimpleCrossingS9N3-v0",
+            "MiniGrid-LavaCrossingS9N3-v0",
+
+            "MiniGrid-SimpleCrossingS9N1-v0",
+            "MiniGrid-LavaCrossingS9N1-v0"
+          ],
+          "MOSAIC-vertical": [
+            "MiniGrid-SimpleCrossingS9N1-v0",
+            "MiniGrid-LavaCrossingS9N1-v0",
+            "MiniGrid-SimpleCrossingS9N2-v0",
+            "MiniGrid-LavaCrossingS9N2-v0",
+            "MiniGrid-SimpleCrossingS9N3-v0",
+            "MiniGrid-LavaCrossingS9N3-v0",
+            "MiniGrid-SimpleCrossingS9N1-v0",
+            "MiniGrid-LavaCrossingS9N1-v0",
+            "MiniGrid-SimpleCrossingS9N2-v0",
+            "MiniGrid-LavaCrossingS9N2-v0",
+            "MiniGrid-SimpleCrossingS9N3-v0",
+            "MiniGrid-LavaCrossingS9N3-v0",
+            "MiniGrid-SimpleCrossingS9N1-v0",
+            "MiniGrid-LavaCrossingS9N1-v0"
+          ],
           }
 
-def run_experiment(args, save_dir, exp_id = 0, seed = None):
+def run_experiment(args, save_dir, exp_id = 0, seed = None, env_seeds=None):
     import matplotlib
     matplotlib.use('Agg') 
 
-    np.random.seed()
+    print("SEEEEED")
+    print(seed)
+
+    if seed is not None:
+        import random
+        import numpy as np
+        import torch
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+
+
+    os.environ["WANDB_START_METHOD"] = "thread"
 
     single_logger = Logger(f"seed_{exp_id if seed is None else seed}", results_dir=save_dir, log_console=True)
     save_dir = single_logger.path
@@ -49,8 +97,9 @@ def run_experiment(args, save_dir, exp_id = 0, seed = None):
     gamma_eval = args.gamma_eval
     
     mdp = []
-    for env_name_i in env_names:
-        mdp.append(MiniGrid(env_name_i, horizon = horizon, gamma=gamma, render_mode=args.render_mode))
+
+    for env_name_i, env_seed_i in zip(env_names, env_seeds):
+        mdp.append(MiniGrid(env_name_i, horizon = horizon, gamma=gamma, render_mode=args.render_mode, seed=env_seed_i, changing=False))
 
     n_contexts = len(mdp)
 
@@ -267,9 +316,17 @@ if __name__ == '__main__':
     with open(os.path.join(save_dir, 'args.pkl'), 'wb') as f:
         pickle.dump(args, f)
 
+    env_seeds_list = [
+        [840, 840, 841, 841, 842, 842, 843, 843, 844, 844, 845, 845, 846, 846],
+        [940, 940, 941, 941, 942, 942, 943, 943, 944, 944, 945, 945, 946, 946],
+        [1040, 1040, 1041, 1041, 1042, 1042, 1043, 1043, 1044, 1044, 1045, 1045, 1046, 1046],
+        [1140, 1140, 1141, 1141, 1142, 1142, 1143, 1143, 1144, 1144, 1145, 1145, 1146, 1146],
+        [1240, 1240, 1241, 1241, 1242, 1242, 1243, 1243, 1244, 1244, 1245, 1245, 1246, 1246]
+    ]
+
     if args.seed is not None:
-        out = Parallel(n_jobs=-1)(delayed(run_experiment)(args, save_dir, i, s)
-                              for i, s in zip(range(args.n_exp), args.seed))
+        out = Parallel(n_jobs=-1)(delayed(run_experiment)(args, save_dir, i, s, env_seeds_list[i])
+                          for i, s in zip(range(args.n_exp), args.seed))
     elif args.n_exp > 1:
         out = Parallel(n_jobs=-1)(delayed(run_experiment)(args, save_dir, i)
                               for i in range(args.n_exp))

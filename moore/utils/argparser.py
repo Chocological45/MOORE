@@ -105,6 +105,8 @@ def argparser():
      arg_utils.add_argument("--n_exp", type=int)
      arg_utils.add_argument('--seed', type=int, nargs = '+', 
                             help='Seed to be used.')#
+     arg_utils.add_argument('--env_seeds', type=int, nargs = '+', 
+                            help='Seed to be used.')#
 
      args = parser.parse_args()
 
