@@ -1,3 +1,6 @@
+This is a fork of the original MOORE repository developed by Ahmed Hendawy, Jan Peters, and Carlo D'Eramo. It has been modified to include seeding and custom MiniGrid environment configurations in support of the publication "Collaborative Learning in Agentic Systems: A Collective AI is Greater Than the Sum of Its Parts".
+
+
 # MOORE
 
 Official code of the paper [Multi-Task Reinforcement Learning with Mixture of Orthogonal Experts](https://arxiv.org/abs/2311.11385), which was presented at Twelfth International Conference on Learning Representations (ICLR 2024) in Vienna Austria.
